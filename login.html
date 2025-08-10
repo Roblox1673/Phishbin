@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phishbin - Logowanie</title>
+  <style>
+    body {
+      background-color: #0b0b0b;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      background: #000;
+      border: 2px solid #00ffcc;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #00ffcc;
+      width: 350px;
+      padding: 1.5rem;
+    }
+    h2 {
+      text-align: center;
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+    label {
+      display: block;
+      margin: 0.8rem 0 0.3rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #00ffcc;
+      background-color: #111;
+      color: #00ffcc;
+      font-size: 1rem;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #00ffcc;
+      box-shadow: 0 0 10px #00ffcc;
+    }
+    button {
+      margin-top: 1.2rem;
+      width: 100%;
+      padding: 0.7rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #000;
+      background-color: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffcc;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #00b399;
+    }
+    .switch {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #00ffcc;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: underline;
+    }
+    .message {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #ff5555;
+      text-align: center;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="login-panel">
+    <h2>Logowanie</h2>
+    <label for="login-username">Nazwa użytkownika</label>
+    <input type="text" id="login-username" autocomplete="username" />
+    <label for="login-password">Hasło</label>
+    <input type="password" id="login-password" autocomplete="current-password" />
+    <button id="login-btn">Zaloguj się</button>
+    <div class="message" id="login-message"></div>
+    <div class="switch" id="to-register">Nie masz konta? Zarejestruj się</div>
+  </div>
+
+  <div class="container" id="register-panel" style="display:none;">
+    <h2>Rejestracja</h2>
+    <label for="reg-username">Nazwa użytkownika</label>
+    <input type="text" id="reg-username" autocomplete="username" />
+    <label for="reg-password">Hasło</label>
+    <input type="password" id="reg-password" autocomplete="new-password" />
+    <button id="register-btn">Zarejestruj się</button>
+    <div class="message" id="register-message"></div>
+    <div class="switch" id="to-login">Masz konto? Zaloguj się</div>
+  </div>
+
+  <script>
+    // Funkcje pomocnicze localStorage
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('phishbin_users') || '{}');
+    }
+    function saveUsers(users) {
+      localStorage.setItem('phishbin_users', JSON.stringify(users));
+    }
+
+    // Przełączanie paneli
+    const loginPanel = document.getElementById('login-panel');
+    const registerPanel = document.getElementById('register-panel');
+    const toRegister = document.getElementById('to-register');
+    const toLogin = document.getElementById('to-login');
+
+    toRegister.addEventListener('click', () => {
+      loginPanel.style.display = 'none';
+      registerPanel.style.display = 'block';
+      clearMessages();
+      clearInputs();
+    });
+    toLogin.addEventListener('click', () => {
+      registerPanel.style.display = 'none';
+      loginPanel.style.display = 'block';
+      clearMessages();
+      clearInputs();
+    });
+
+    function clearMessages() {
+      document.getElementById('login-message').textContent = '';
+      document.getElementById('register-message').textContent = '';
+    }
+    function clearInputs() {
+      document.querySelectorAll('input').forEach(i => i.value = '');
+    }
+
+    // Logowanie
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const users = getUsers();
+
+      if (!username || !password) {
+        showMessage('login-message', 'Wypełnij wszystkie pola');
+        return;
+      }
+
+      if (!users[username]) {
+        showMessage('login-message', 'Nie znaleziono użytkownika');
+        return;
+      }
+
+      if (users[username] !== password) {
+        showMessage('login-message', 'Nieprawidłowe hasło');
+        return;
+      }
+
+      // Zalogowano
+      localStorage.setItem('phishbin_session', username);
+      showMessage('login-message', 'Zalogowano! Przekierowanie...');
+      setTimeout(() => {
+        window.location.href = 'index.html'; // lub inna strona po zalogowaniu
+      }, 1500);
+    });
+
+    // Rejestracja
+    document.getElementById('register-btn').addEventListener('click', () => {
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const users = getUsers();
+
+      if (!username || !password) {
+        showMessage('register-message', 'Wypełnij wszystkie pola');
+        return;
+      }
+      if (users[username]) {
+        showMessage('register-message', 'Ta nazwa użytkownika jest zajęta');
+        return;
+      }
+
+      // Zapisz nowego użytkownika
+      users[username] = password;
+      saveUsers(users);
+
+      showMessage('register-message', 'Zarejestrowano! Możesz się teraz zalogować.');
+      clearInputs();
+    });
+
+    function showMessage(id, text) {
+      document.getElementById(id).textContent = text;
+    }
+  </script>
+</body>
+</html>
